@@ -1,3 +1,4 @@
+
 import Image from "next/image";
 import {
   ChangeEvent,
@@ -27,6 +28,8 @@ const UploadImageForm: FC<UploadImageFormProps> = ({
   const [image, setImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
+  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const webcamRef = useRef<Webcam>(null);
 
@@ -41,7 +44,6 @@ const UploadImageForm: FC<UploadImageFormProps> = ({
 
   const handleClick = useCallback(() => {
     imageInputRef.current?.click();
-    console.log('first')
   }, []);
 
   const checkImageSize = useCallback((image: File) => {
@@ -50,7 +52,7 @@ const UploadImageForm: FC<UploadImageFormProps> = ({
   }, []);
 
   const handleImageChange = useCallback(
-    async (event: ChangeEvent<HTMLInputElement>) => {
+    (event: ChangeEvent<HTMLInputElement>) => {
       if (event.target.files && event.target.files[0]) {
         const img = event.target.files[0];
         if (checkImageSize(img)) {
@@ -64,7 +66,9 @@ const UploadImageForm: FC<UploadImageFormProps> = ({
     [checkImageSize, onPdfImageChange]
   );
 
-  const captureFromCamera = useCallback(() => {
+  const captureFromCamera = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     const screenshot = webcamRef.current?.getScreenshot();
     if (screenshot) {
       fetch(screenshot)
@@ -79,34 +83,44 @@ const UploadImageForm: FC<UploadImageFormProps> = ({
           }
           setImage(file);
           onPdfImageChange(file);
+          setPreviewUrl(screenshot);
           setIsCameraOpen(false);
+        })
+        .catch((error) => {
+          console.error("Error capturing image:", error);
+          toast.error("Failed to capture image");
         });
     }
   }, [checkImageSize, onPdfImageChange]);
-useEffect(() => {
-  if (image) {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPreviewUrl(reader.result as string);
-    };
-    reader.readAsDataURL(image); 
-  } else {
-    setPreviewUrl(null);
-  }
-}, [image]);
 
-  // useEffect(() => {
-  //   if (image) {
-  //     const url = URL.createObjectURL(image);
-  //     setPreviewUrl(url);
+  const handleDevices = useCallback((mediaDevices: MediaDeviceInfo[]) => {
+    const videoDevices = mediaDevices.filter(({ kind }) => kind === "videoinput");
+    setDevices(videoDevices);
+  }, []);
 
-  //     return () => {
-  //       URL.revokeObjectURL(url);
-  //     };
-  //   } else {
-  //     setPreviewUrl(null);
-  //   }
-  // }, [image]);
+  const switchCamera = useCallback(() => {
+    setFacingMode(prev => prev === "user" ? "environment" : "user");
+  }, []);
+
+  useEffect(() => {
+    if (isCameraOpen) {
+      navigator.mediaDevices.enumerateDevices().then(handleDevices);
+    }
+  }, [isCameraOpen, handleDevices]);
+
+  useEffect(() => {
+    if (image) {
+      if (!previewUrl) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPreviewUrl(reader.result as string);
+        };
+        reader.readAsDataURL(image);
+      }
+    } else {
+      setPreviewUrl(null);
+    }
+  }, [image, previewUrl]);
 
   useEffect(() => {
     if (resetTrigger) {
@@ -117,10 +131,10 @@ useEffect(() => {
   return (
     <>
       <div className="flex items-center gap-4">
-        {image ? (
+        {previewUrl ? (
           <div className="relative w-fit group" onClick={handleRemoveImage}>
             <Image
-              src={previewUrl || ""}
+              src={previewUrl}
               alt="profile image"
               width={188}
               height={188}
@@ -168,15 +182,32 @@ useEffect(() => {
             ref={webcamRef}
             screenshotFormat="image/jpeg"
             className="rounded-lg w-[320px] h-[240px]"
+            videoConstraints={{
+              facingMode: facingMode,
+              width: { ideal: 1920 },
+              height: { ideal: 1080 }
+            }}
           />
+          
           <div className="flex mt-4 gap-4">
+            {devices.length > 1 && (
+              <button
+                type="button"
+                onClick={switchCamera}
+                className="bg-blue-500 text-white px-4 py-2 rounded"
+              >
+                Switch Camera
+              </button>
+            )}
             <button
+              type="button"
               onClick={captureFromCamera}
               className="bg-green-600 text-white px-4 py-2 rounded"
             >
               Capture
             </button>
             <button
+              type="button"
               onClick={() => setIsCameraOpen(false)}
               className="bg-red-500 text-white px-4 py-2 rounded"
             >
@@ -190,113 +221,3 @@ useEffect(() => {
 };
 
 export default UploadImageForm;
-
-
-// import Image from "next/image";
-// import { ChangeEvent, FC, useCallback, useEffect, useRef, useState } from "react";
-// import { toast } from "sonner";
-// import { CiTrash } from "react-icons/ci";
-// import { FaPlus } from "react-icons/fa";
-
-// const MAX_FILE_SIZE = 5120; 
-
-// interface UploadImageFormProps {
-//   onPdfImageChange: (file: File | null) => void; // Allow null for resets
-//   resetTrigger?: boolean; // Optional prop to reset the form
-// }
-// const UploadImageForm: FC<UploadImageFormProps> = ({ onPdfImageChange, resetTrigger }) => {
-//   const [image, setImage] = useState<File | null>(null);
-
-//   const imageInputRef = useRef<HTMLInputElement>(null);
-
-//   const handleRemoveImage = useCallback(() => {
-//     if (imageInputRef.current) {
-//       imageInputRef.current.value = "";
-//       setImage(null);
-//       onPdfImageChange(null);
-//     }
-//   }, []);
-
-//   const handleClick = useCallback(() => {
-//     imageInputRef.current?.click();
-//   }, []);
-
-//   const checkImageSize = useCallback((image: File) => {
-//     const imageSizeInKb = image.size / 1024;
-//     if (imageSizeInKb > MAX_FILE_SIZE) {
-//       return true;
-//     }
-
-//     return false;
-//   }, []);
-
-//   const handleImageChange = useCallback(
-//     async (event: ChangeEvent<HTMLInputElement>) => {
-//       if (event.target.files && event.target.files[0]) {
-//         const img = event.target.files[0];
-
-//         // Check if the image size exceeds 5MB
-//         const isImageSizeBigger = checkImageSize(img);
-//         if (isImageSizeBigger) {
-//           toast.error(`Image should not be greater than 5 MB`);
-//           return;
-//         }
-
-//         // No need to check image dimensions anymore
-//         onPdfImageChange(img);
-
-//         setImage(img);
-//       }
-//     },
-//     [checkImageSize, onPdfImageChange]
-//   );
-
-//   useEffect(() => {
-//     if (resetTrigger) {
-//       handleRemoveImage();
-//     }
-//   }, [resetTrigger, handleRemoveImage]);
-  
-//   return (
-//     <div className="flex items-center">
-//       {image ? (
-//         <div className="relative w-fit group" onClick={handleRemoveImage}>
-//           <Image
-//             src={URL.createObjectURL(image)}
-//             alt="profile image"
-//             width={188}
-//             height={188}
-//             className="object-cover rounded-md flex self-center w-[188px] h-[188px]"
-//           />
-
-//           <div className="absolute top-0 bottom-0 left-0 right-0 items-center justify-center hidden cursor-pointer group-hover:flex">
-//             <CiTrash size={30} color="red" />
-//           </div>
-//         </div>
-//       ) : (
-//         <div
-//           className="w-[188px] h-[188px] rounded-md flex items-center justify-center cursor-pointer bg-gray-50"
-//           onClick={handleClick}
-//         >
-//           <div className="text-center" style={{ display: "ruby" }}>
-//             <FaPlus className="text-center" size={18} color="#03F719" />
-//             <div className="text-black text-center font-bold">
-//               Click Here to Upload Photo
-//             </div>
-//           </div>
-//         </div>
-//       )}
-
-//       <input
-//         ref={imageInputRef}
-//         hidden
-//         type="file"
-//         name="profileImage"
-//         accept=".png, .jpg, .jpeg, .heic"
-//         onChange={handleImageChange}
-//       />
-//     </div>
-//   );
-// };
-
-// export default UploadImageForm;
