@@ -97,6 +97,7 @@ interface MessagesProps {
     isActive: boolean;
   } | null;
   invoice?: {
+    id?:any;
     streetAddress?: string | null;
     invoiceUrl?: string | null;
     invoiceReceipt?: string | null;
@@ -109,6 +110,18 @@ interface MessagesProps {
 }
 
 const Page = () => {
+  const [selectedOption, setSelectedOption] = useState('');
+
+  // const shippingOptions = [
+  //   { id: 1, label: 'Normal', price: 0.00 },
+  //   { id: 2, label: 'Next Day Air (UPS)', price: 31.72 },
+  //   { id: 3, label: '2nd Day Air (UPS)', price: 20.06 },
+  //   { id: 4, label: '2nd Day Air AM (UPS)', price: 21.91 },
+  //   { id: 5, label: 'Ground (UPS)', price: 9.43 },
+
+  // ];
+
+
   const [msgId, setMsgId] = useState<string | null>(null);
   const [conversationLoading, setConversationLoading] = useState(false);
   const [isSeller, setIsSeller] = useState(true);
@@ -128,7 +141,10 @@ const Page = () => {
   const [conversationMessages, setConversationMessage] = useState<
     MessagesProps[]
   >([]);
-
+  const [selectedRateId, setSelectedRateId] = useState<string | null>(null);
+  const [labelData, setLabelData] = useState<any>(null);
+  const [labelLoading, setLabelLoading] = useState(false);
+  const [labelError, setLabelError] = useState<string | null>(null);
   const [sellerMessage, setSellerMessage] = useState<MessagesProps[]>([]);
 
   const LoggedUser = localStorage.getItem("User")!;
@@ -358,7 +374,6 @@ const Page = () => {
   // ------------------- create invoice start--------------
   const [invoiceModal, setInvoiceModal] = useState(false);
   const [itemName, setItemName] = useState<string>("");
-
   const [listedMessageId, setListedMessageId] = useState<{
     BuyerId: string;
     listingId: string;
@@ -393,11 +408,11 @@ const Page = () => {
     setItemName(listing_name);
     setInvoiceModal(true);
   };
-  const [uspsShippingRate, setUspsShippingRate] = useState<number>();
+  const [uspsShippingRate, setUspsShippingRate] = useState([]);
   const [uspsResponseStatus, setUspsResponseStatus] = useState<Boolean>(false);
   const [uspsData, setUspsData] = useState({
     weight: "",
-    weightUnit: "kg",
+    weightUnit: "lb",
     length: "",
     width: "",
     height: "",
@@ -414,20 +429,23 @@ const Page = () => {
     setShowShippingCalculateModal(false); // Close the modal
   };
 
-  const [msgsId, setMsgsId] = useState<any>();
-  const [listId, setListId] = useState<any>();
+  const [invoiceId, setInvoiceId] = useState<any>();
+  // const [listId, setListId] = useState<any>();
   const [originZipCodes, SetOriginZipCode] = useState<any>();
 
   const handleShowShippingModal = (
-    listId: any,
-    msgId: any,
+    invoiceId: any,
+    // msgId: any,
     originzipcode: any
   ) => {
+    console.log("invoiceId", invoiceId);
     setShowShippingCalculateModal(true);
-    setMsgsId(msgId);
-    setListId(listId);
+    setInvoiceId(invoiceId);
+    // setListId(listId);
     SetOriginZipCode(originzipcode);
   };
+
+  const today_date = new Date().toISOString();
 
   const handleUspsPostRequest = async () => {
     setCheckRate(true);
@@ -438,40 +456,38 @@ const Page = () => {
       //   ...uspsData,
       // };
 
-       if (!uspsData.weight || Number(uspsData.weight) <= 0) {
-              setCheckRate(false);
-              return toast.error("Please enter the Weight");
-            }
-        
-            let weightInKg = Number(uspsData.weight) || 0;
-        
-            switch (uspsData.weightUnit) {
-              case "g":
-                weightInKg = weightInKg / 1000; // Convert grams to kg
-                break;
-              case "lbs":
-                weightInKg = weightInKg * 0.453592; // Convert lbs to kg
-                break;
-              case "oz":
-                weightInKg = weightInKg * 0.0283495; // Convert oz to kg
-                break;
-            }
-        
-            if (weightInKg > 70) {
-              setCheckRate(false);
-              return toast.error("You cannot ship more than 70 kg.");
-            }
-        
-            // Remove weightUnit from uspsData and update weight with the converted value
-            const { weightUnit, ...sanitizedData } = uspsData;
-        
-            const finalData = {
-              ...sanitizedData,
-              weight: weightInKg, // Send weight in kg
-              length: Number(uspsData.length) || 0,
-              width: Number(uspsData.width) || 0,
-              height: Number(uspsData.height) || 0,
-            };
+      if (!uspsData.weight || Number(uspsData.weight) <= 0) {
+        setCheckRate(false);
+        return toast.error("Please enter the Weight");
+      }
+
+      // let weightInKg = Number(uspsData.weight) || 0;
+
+      // switch (uspsData.weightUnit) {
+
+      //   case "lb":
+      //     weightInKg = weightInKg; // Convert lbs to kg
+      //     break;
+      //   case "oz":
+      //     weightInKg = weightInKg * 0.0283495; // Convert oz to kg
+      //     break;
+      // }
+
+      // if (weightInKg > 70) {
+      //   setCheckRate(false);
+      //   return toast.error("You cannot ship more than 70 kg.");
+      // }
+
+      // Remove weightUnit from uspsData and update weight with the converted value
+      const { weightUnit, ...sanitizedData } = uspsData;
+
+      const finalData = {
+        ...sanitizedData,
+        weight: uspsData.weight, // Send weight in kg
+        length: Number(uspsData.length) || 0,
+        width: Number(uspsData.width) || 0,
+        height: Number(uspsData.height) || 0,
+      };
 
 
 
@@ -485,22 +501,25 @@ const Page = () => {
       //   height: parseFloat(uspsData.height) || 0,
       // };
       // const sanitizedData = (({ weightUnit, ...rest }) => rest)(uspsData);
-      const messageId = msgsId || 0;
-      const listingId = listId || 0;
+      const invId = invoiceId || 0;
+      // const listingId = listId || 0;
 
+      let accessToken = localStorage.getItem("accessToken");
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API}/api/shipping/delivery-rate-usps`,
+        `${process.env.NEXT_PUBLIC_API}/api/shipping/create-shippo-shipment`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
           },
           body: JSON.stringify({
             ...finalData,
             originZIPCode: String(originZipCodes),
-
-            messageId,
-            listingId,
+            invoiceId: invId,
+            mass_unit: uspsData.weightUnit,
+            distance_unit: "in",
+            shipment_date: today_date,
           }),
         }
       );
@@ -514,9 +533,9 @@ const Page = () => {
       }
 
       const data = await response.json();
-
+      console.log(data, 'shippo data')
       // setUspsResponse(data?.rate?.totalBasePrice);
-      setUspsShippingRate(data?.rate?.totalBasePrice);
+      setUspsShippingRate(data?.rates);
       // setUspsError(null);
       // setUspsResponseStatus(true);
       setCheckRate(false);
@@ -534,154 +553,150 @@ const Page = () => {
   // --------------------create invoice end----------
 
   const renderMessages = () => (
+
     <>
       <div className="flex h-[100vh] md:h-[90vh] border border-dark-green">
         <div
-          className={`${
-            showChat && isMobile ? "hidden" : "w-full md:w-1/4"
-          } w-full md:w-1/4 bg-black text-white border-gray-950 p-4 h-auto overflow-y-auto pe-3 scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-gray-300 scroll-smooth`}
+          className={`${showChat && isMobile ? "hidden" : "w-full md:w-1/4"
+            } w-full md:w-1/4 bg-black text-white border-gray-950 p-4 h-auto overflow-y-auto pe-3 scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-gray-300 scroll-smooth`}
         >
           {isSeller
             ? listings?.map((listing) => (
-                <Accordion
-                  className="bg-white mb-2 px-2 rounded-lg"
+              <Accordion
+                className="bg-white mb-2 px-2 rounded-lg"
+                placeholder=""
+                key={listing.listingId}
+                open={open === listing.listingId}
+                icon={
+                  open === listing.listingId ? (
+                    <IoIosArrowUp className="text-black text-[1rem]" />
+                  ) : (
+                    <IoIosArrowDown className="text-black text-[1rem]" />
+                  )
+                }
+              >
+                <AccordionHeader
                   placeholder=""
-                  key={listing.listingId}
-                  open={open === listing.listingId}
-                  icon={
-                    open === listing.listingId ? (
-                      <IoIosArrowUp className="text-black text-[1rem]" />
-                    ) : (
-                      <IoIosArrowDown className="text-black text-[1rem]" />
-                    )
-                  }
+                  className="py-1 leading-tight border-b-white"
+                  onClick={() => toggleAccordion(listing.listingId)}
                 >
-                  <AccordionHeader
-                    placeholder=""
-                    className="py-1 leading-tight border-b-white"
-                    onClick={() => toggleAccordion(listing.listingId)}
-                  >
-                    <MiniListView
-                      img={listing.featuredImage}
-                      title={listing.title}
-                      imgClassName="h-[35px] min-w-[55px] max-w-[45px]"
-                      titleClassName="text-[12px] font-[400] line-clamp-2 text-ellipsis text-black"
-                      mainClassName="border-none"
-                    />
-                  </AccordionHeader>
-                  <AccordionBody className="py-1">
-                    {open === listing.listingId && (
-                      <div>
-                        {loading ? (
-                          <>
-                            <div>
-                              <div className=" flex items-center justify-center z-10">
-                                <svg
-                                  aria-hidden="true"
-                                  className="inline w-8 h-8 text-gray-200 animate-spin dark:text-gray-600 fill-bright-green"
-                                  viewBox="0 0 100 101"
-                                  fill="none"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                >
-                                  <path
-                                    d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
-                                    fill="currentColor"
-                                  />
-                                  <path
-                                    d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
-                                    fill="currentFill"
-                                  />
-                                </svg>
-                              </div>
-                            </div>
-                          </>
-                        ) : (
-                          usersByListing[listing.listingId]?.map((user) => (
-                            <div
-                              key={user.id}
-                              className={`cursor-pointer last:border-none`}
-                              onClick={() => handleUserClick(user)}
-                            >
-                              <div
-                                className={`flex items-center space-x-2 border border-gray-300 rounded-md p-1 ${
-                                  selectedUserId === user.id
-                                    ? "bg-bright-green"
-                                    : ""
-                                }`}
+                  <MiniListView
+                    img={listing.featuredImage}
+                    title={listing.title}
+                    imgClassName="h-[35px] min-w-[55px] max-w-[45px]"
+                    titleClassName="text-[12px] font-[400] line-clamp-2 text-ellipsis text-black"
+                    mainClassName="border-none"
+                  />
+                </AccordionHeader>
+                <AccordionBody className="py-1">
+                  {open === listing.listingId && (
+                    <div>
+                      {loading ? (
+                        <>
+                          <div>
+                            <div className=" flex items-center justify-center z-10">
+                              <svg
+                                aria-hidden="true"
+                                className="inline w-8 h-8 text-gray-200 animate-spin dark:text-gray-600 fill-bright-green"
+                                viewBox="0 0 100 101"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
                               >
-                                <IoPersonCircleOutline className="text-[2rem] text-black" />
-                                <div className="flex justify-between items-center w-full">
-                                  <p className="text-[12px] capitalize">
-                                    {user?.senderFullName
-                                      ? `${user?.senderFullName
-                                          .substring(0, 3)
-                                          .toLowerCase()}***`
-                                      : "Unknown User"}
-                                  </p>
-                                  <p
-                                    className={`text-[0.7rem] font-semibold capitalize text-black bg-bright-green px-1 py-1 rounded-full shadow-md
-                                  ${
-                                    selectedUserId === user.id
+                                <path
+                                  d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                                  fill="currentColor"
+                                />
+                                <path
+                                  d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                                  fill="currentFill"
+                                />
+                              </svg>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        usersByListing[listing.listingId]?.map((user) => (
+                          <div
+                            key={user.id}
+                            className={`cursor-pointer last:border-none`}
+                            onClick={() => handleUserClick(user)}
+                          >
+                            <div
+                              className={`flex items-center space-x-2 border border-gray-300 rounded-md p-1 ${selectedUserId === user.id
+                                ? "bg-bright-green"
+                                : ""
+                                }`}
+                            >
+                              <IoPersonCircleOutline className="text-[2rem] text-black" />
+                              <div className="flex justify-between items-center w-full">
+                                <p className="text-[12px] capitalize">
+                                  {user?.senderFullName
+                                    ? `${user?.senderFullName
+                                      .substring(0, 3)
+                                      .toLowerCase()}***`
+                                    : "Unknown User"}
+                                </p>
+                                <p
+                                  className={`text-[0.7rem] font-semibold capitalize text-black bg-bright-green px-1 py-1 rounded-full shadow-md
+                                  ${selectedUserId === user.id
                                       ? "bg-white"
                                       : "bg-bright-green"
-                                  }
+                                    }
                                   
                                   `}
-                                  >
-                                    {user?.offerPrice
-                                      ? `$${user.offerPrice}`
-                                      : "$0.00"}
-                                  </p>
-                                </div>
+                                >
+                                  {user?.offerPrice
+                                    ? `$${user.offerPrice}`
+                                    : "$0.00"}
+                                </p>
                               </div>
                             </div>
-                          ))
-                        )}
-                      </div>
-                    )}
-                  </AccordionBody>
-                </Accordion>
-              ))
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </AccordionBody>
+              </Accordion>
+            ))
             : listings?.map((listing) => (
-                // <div
-                //   key={listing.id}
-                //   className="mb-2 rounded-lg overflow-hidden border-2 p-1 cursor-pointer bg-white text-black"
-                //   onClick={() => handleBuyerUserClick({ id: listing.id })}
-                // >
-                <div
-                  key={listing.id}
-                  className={`mb-2 rounded-lg overflow-hidden p-1 cursor-pointer text-black ${
-                    selectedId === listing.id ? "bg-bright-green " : "bg-white"
+              // <div
+              //   key={listing.id}
+              //   className="mb-2 rounded-lg overflow-hidden border-2 p-1 cursor-pointer bg-white text-black"
+              //   onClick={() => handleBuyerUserClick({ id: listing.id })}
+              // >
+              <div
+                key={listing.id}
+                className={`mb-2 rounded-lg overflow-hidden p-1 cursor-pointer text-black ${selectedId === listing.id ? "bg-bright-green " : "bg-white"
                   }`}
-                  onClick={() => handleBuyerUserClick(listing)}
-                >
-                  <div className="flex items-center">
-                    <MiniListView
-                      img={listing?.listing?.featuredImage}
-                      title={listing?.listing?.title}
-                      imgClassName="h-[35px] min-w-[55px]"
-                      titleClassName="text-[12px] font-[400] line-clamp-2 text-ellipsis"
-                      mainClassName="border-none"
-                    />
-                    <p
-                      className={`text-[0.6rem] font-semibold capitalize text-black bg-bright-green px-1 py-1 rounded-full shadow-md
+                onClick={() => handleBuyerUserClick(listing)}
+              >
+                <div className="flex items-center">
+                  <MiniListView
+                    img={listing?.listing?.featuredImage}
+                    title={listing?.listing?.title}
+                    imgClassName="h-[35px] min-w-[55px]"
+                    titleClassName="text-[12px] font-[400] line-clamp-2 text-ellipsis"
+                    mainClassName="border-none"
+                  />
+                  <p
+                    className={`text-[0.6rem] font-semibold capitalize text-black bg-bright-green px-1 py-1 rounded-full shadow-md
             ${selectedId === listing.id ? "bg-white" : "bg-bright-green"}
             
       `}
-                    >
-                      {listing?.offerPrice
-                        ? `$${listing?.offerPrice}`
-                        : "$0.00"}
-                    </p>
-                  </div>
+                  >
+                    {listing?.offerPrice
+                      ? `$${listing?.offerPrice}`
+                      : "$0.00"}
+                  </p>
                 </div>
-              ))}
+              </div>
+            ))}
         </div>
 
         <div
-          className={`${
-            showChat || !isMobile ? "w-full md:w-3/4" : "hidden"
-          } flex flex-col p-4 relative`}
+          className={`${showChat || !isMobile ? "w-full md:w-3/4" : "hidden"
+            } flex flex-col p-4 relative`}
         >
           {isSeller ? (
             <>
@@ -696,21 +711,21 @@ const Page = () => {
                     role="alert"
                   >
                     <p className="text-sm font-medium text-bright-green">
-                    Your BUY NOW request has been sent
+                      Your BUY NOW request has been sent
 
-to the Seller to create your invoice.
+                      to the Seller to create your invoice.
 
-Please check your SPAM folder if your invoice
+                      Please check your SPAM folder if your invoice
 
-is not received.
+                      is not received.
                     </p>
                   </div>
                 )}
 
               {conversationMessages.length > 0 &&
-              conversationMessages[0]?.invoice &&
-              conversationMessages[0]?.invoice?.invoiceReceipt &&
-              conversationMessages[0]?.invoice?.invoiceUrl ? (
+                conversationMessages[0]?.invoice &&
+                conversationMessages[0]?.invoice?.invoiceReceipt &&
+                conversationMessages[0]?.invoice?.invoiceUrl ? (
                 conversationMessages[0]?.invoice?.orderStatus == "COMPLETED" ? (
                   <div
                     id="alert-additional-content-3"
@@ -884,75 +899,79 @@ is not received.
                               }
                             />
 
-                            <Button
-                              text="Calculate Shipping"
-                              type="success"
-                              className="text-xs"
-                              onClick={() =>
-                                handleShowShippingModal(
-                                  sellerMessage[0]?.listing?.id,
-                                  sellerMessage[0]?.id,
-                                  sellerMessage[0]?.senderUser?.zipCode
-                                )
-                              }
-                            />
+
+<Button
+                                      text="Calculate Shipping"
+                                      type="success"
+                                      className="w-full mt-1 lg:w-[210px]"
+                                      onClick={() =>
+                                        // console.log(" sellerMessage[0]", sellerMessage[0].invoice.id)
+                                        handleShowShippingModal(
+                                          sellerMessage[0]?.invoice?.id,
+                                          // sellerMessage[0]?.listing?.id,
+                                          // sellerMessage[0]?.id,
+                                          sellerMessage[0]?.senderUser?.zipCode
+                                        )
+                                      }
+                                    />
+
+                                    
                           </>
                         )}
                         {sellerMessage[0].invoice !== null
                           ? sellerMessage[0]?.recieverUser?.zipCode !==
-                              null && (
-                              <div>
-                                {
-                                  // sellerMessage[0]?.invoice?.invoiceeEmail ===
-                                  //   "" &&
-                                  // sellerMessage[0]?.invoice?.invoiceeName ===
-                                  //   "" &&
-                                  // sellerMessage[0]?.invoice?.invoiceePrice ===
-                                  //   ""
-                                  sellerMessage[0]?.invoice?.invoiceUrl !==
+                          null && (
+                            <div>
+                              {
+                                // sellerMessage[0]?.invoice?.invoiceeEmail ===
+                                //   "" &&
+                                // sellerMessage[0]?.invoice?.invoiceeName ===
+                                //   "" &&
+                                // sellerMessage[0]?.invoice?.invoiceePrice ===
+                                //   ""
+                                sellerMessage[0]?.invoice?.invoiceUrl !==
                                   null ? (
+                                  <Button
+                                    text="Invoice Created"
+                                    type="success"
+                                    className="lg:w-[160px]"
+                                    onClick={handAlreadyCreated}
+                                  />
+                                ) : (
+                                  <>
+                                    {/* <div className="flex items-center gap-2"> */}
                                     <Button
-                                      text="Invoice Created"
+                                      text="Offer Accepted | SOLD"
                                       type="success"
-                                      className="lg:w-[160px]"
-                                      onClick={handAlreadyCreated}
+                                      onClick={() =>
+                                        handleshowInvoiceModal(
+                                          sellerMessage[0]?.listing.id,
+                                          sellerMessage[0]?.listing.title,
+                                          sellerMessage[0]?.id,
+                                          sellerMessage[0]?.recieverUser
+                                            ?.id ?? 0
+                                          // sellerMessage[0]?.listing.featuredImage
+                                        )
+                                      }
                                     />
-                                  ) : (
-                                    <>
-                                      {/* <div className="flex items-center gap-2"> */}
-                                      <Button
-                                        text="Offer Accepted | SOLD"
-                                        type="success"
-                                        onClick={() =>
-                                          handleshowInvoiceModal(
-                                            sellerMessage[0]?.listing.id,
-                                            sellerMessage[0]?.listing.title,
-                                            sellerMessage[0]?.id,
-                                            sellerMessage[0]?.recieverUser
-                                              ?.id ?? 0
-                                            // sellerMessage[0]?.listing.featuredImage
-                                          )
-                                        }
-                                      />
-                                      <Button
-                                        text="Calculate Shipping"
-                                        type="success"
-                                        className="w-full mt-1 lg:w-[180px]"
-                                        onClick={() =>
-                                          handleShowShippingModal(
-                                            sellerMessage[0]?.listing?.id,
-                                            sellerMessage[0]?.id,
-                                            sellerMessage[0]?.senderUser
-                                              ?.zipCode
-                                          )
-                                        }
-                                      />
-                                      {/* </div> */}
-                                    </>
-                                  )
-                                }
-                              </div>
-                            )
+                                    <Button
+                                      text="Calculate Shipping"
+                                      type="success"
+                                      className="w-full mt-1 lg:w-[180px]"
+                                      onClick={() =>
+                                        handleShowShippingModal(
+                                          sellerMessage[0]?.invoice?.id,
+                                          // sellerMessage[0]?.id,
+                                          sellerMessage[0]?.senderUser?.zipCode
+                                        )
+                                      }
+                                    />
+                                    {/* </div> */}
+                                  </>
+                                )
+                              }
+                            </div>
+                          )
                           : null}
                       </div>
 
@@ -991,8 +1010,8 @@ is not received.
                                   className="w-full mt-1 lg:w-[180px]"
                                   onClick={() =>
                                     handleShowShippingModal(
-                                      sellerMessage[0]?.listing?.id,
-                                      sellerMessage[0]?.id,
+                                      sellerMessage[0]?.invoice?.id,
+                                      // sellerMessage[0]?.id,
                                       sellerMessage[0]?.senderUser?.zipCode
                                     )
                                   }
@@ -1001,9 +1020,9 @@ is not received.
                             )}
                             {sellerMessage[0].invoice !== null ? (
                               sellerMessage[0]?.recieverUser?.zipCode !==
-                              null ? (
-                                sellerMessage[0]?.invoice?.invoiceUrl !==
                                 null ? (
+                                sellerMessage[0]?.invoice?.invoiceUrl !==
+                                  null ? (
                                   <Button
                                     text="Invoice Created"
                                     type="success"
@@ -1022,7 +1041,7 @@ is not received.
                                           sellerMessage[0]?.listing.title,
                                           sellerMessage[0]?.id,
                                           sellerMessage[0]?.recieverUser?.id ??
-                                            0
+                                          0
                                           // sellerMessage[0]?.listing.featuredImage
                                         )
                                       }
@@ -1033,13 +1052,30 @@ is not received.
                                       type="success"
                                       className="w-full mt-1 lg:w-[210px]"
                                       onClick={() =>
+                                        // console.log(" sellerMessage[0]", sellerMessage[0].invoice.id)
                                         handleShowShippingModal(
-                                          sellerMessage[0]?.listing?.id,
-                                          sellerMessage[0]?.id,
+                                          sellerMessage[0]?.invoice?.id,
+                                          // sellerMessage[0]?.listing?.id,
+                                          // sellerMessage[0]?.id,
                                           sellerMessage[0]?.senderUser?.zipCode
                                         )
                                       }
                                     />
+                                    {/* <Button
+                                      text="General Label"
+                                      type="success"
+                                      className="lg:w-[210px]"
+                                      onClick={() =>
+                                        handleshowInvoiceModal(
+                                          sellerMessage[0]?.listing.id,
+                                          sellerMessage[0]?.listing.title,
+                                          sellerMessage[0]?.id,
+                                          sellerMessage[0]?.recieverUser?.id ??
+                                          0
+                                          // sellerMessage[0]?.listing.featuredImage
+                                        )
+                                      }
+                                    /> */}
                                   </>
                                 )
                               ) : null
@@ -1063,6 +1099,56 @@ is not received.
       </div>
     </>
   );
+
+  // -------------------genrate label----------------
+  const generateShippingLabel = async () => {
+    if (!selectedRateId) {
+      toast.error("Please select a shipping rate first");
+      return;
+    }
+
+    setLabelLoading(true);
+    setLabelError(null);
+
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API}/api/shipping/create-shipment-label`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            rate: selectedRateId,
+            async: false,
+            label_file_type: "PDF_4x6",
+            metadata: "",
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setLabelData(data);
+      toast.success("Shipping label generated successfully!");
+    } catch (error) {
+      console.error("Error generating label:", error);
+      setLabelError(
+        error instanceof Error
+          ? error.message
+          : "Failed to generate shipping label"
+      );
+      toast.error("Failed to generate shipping label");
+    } finally {
+      setLabelLoading(false);
+    }
+  };
+
   return (
     <>
       <div className="p-4">
@@ -1076,11 +1162,10 @@ is not received.
               <button
                 onClick={() => handleToggleChange(true)}
                 disabled={isFetching || isSeller}
-                className={`px-4 py-2 cursor-pointer text-sm font-bold italic rounded-tl-lg rounded-bl-lg ${
-                  isSeller
-                    ? "bg-bright-green text-black border-black"
-                    : "bg-white text-black border-transparent"
-                }`}
+                className={`px-4 py-2 cursor-pointer text-sm font-bold italic rounded-tl-lg rounded-bl-lg ${isSeller
+                  ? "bg-bright-green text-black border-black"
+                  : "bg-white text-black border-transparent"
+                  }`}
               >
                 Buyer
               </button>
@@ -1088,11 +1173,10 @@ is not received.
               <button
                 disabled={isFetching || !isSeller}
                 onClick={() => handleToggleChange(false)}
-                className={`px-4 py-2 cursor-pointer text-sm font-bold rounded-tr-lg rounded-br-lg ${
-                  !isSeller
-                    ? "bg-bright-green text-black border-black"
-                    : "bg-white text-black border-transparent"
-                }`}
+                className={`px-4 py-2 cursor-pointer text-sm font-bold rounded-tr-lg rounded-br-lg ${!isSeller
+                  ? "bg-bright-green text-black border-black"
+                  : "bg-white text-black border-transparent"
+                  }`}
               >
                 Seller
               </button>
@@ -1214,9 +1298,6 @@ is not received.
               <div className="p-5">
                 <div
                   className="bg-black p-4 rounded-lg relative max-w-[40rem] max-h-[90vh] overflow-auto mt-3"
-                  // style={{
-                  //   boxShadow: "1px 1px 10px 2px green",
-                  // }}
                 >
                   <button
                     onClick={handleClosePopup}
@@ -1315,8 +1396,7 @@ is not received.
                                     value={uspsData.weightUnit}
                                     className="border border-gray-300 p-2 ml-1 focus:outline-none focus:ring-2 w-1/4 text-black"
                                   >
-                                    <option value="kg">kg</option>
-                                    <option value="g">g</option>
+
                                     <option value="lbs">lbs</option>
                                     <option value="oz">oz</option>
                                   </select>
@@ -1373,17 +1453,87 @@ is not received.
 
                               {/* Calculate Button & Shipping Price Display */}
                               <div className="flex flex-col justify-center items-center">
+                                <div className="flex flex-col md:flex-row items-start md:items-start mb-2 w-full">
+
+
+
+
+
+
+                                  <div className="p-4 bg-transparent w-full" style={{ height: '200px', overflowY: 'auto' }}>
+                                    <table className="w-full text-white">
+                                      <thead className=" bg-gray-800">
+                                        <tr>
+                                          {/* <th className="text-left py-2 pl-2">Select</th> */}
+                                          <th className="text-left py-2">Service</th>
+                                          <th className="text-left py-2">Price</th>
+                                          <th className="text-left py-2">Delivery Time</th>
+                                          <th className="text-left py-2">Carrier</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="divide-y divide-gray-700">
+                                        {uspsShippingRate?.map((option: any) => (
+                                          <tr key={option.object_id} className="hover:bg-gray-800/50">
+                                            {/* <td className="py-3 pl-2">
+                                              <label className="flex items-center cursor-pointer">
+                                                <input
+                                                  type="radio"
+                                                  name="shipping"
+                                                  value={option.object_id}
+                                                  checked={selectedOption == option.object_id}
+                                                  onChange={() => setSelectedOption(option.object_id)}
+                                                  className="accent-orange-500"
+                                                />
+                                              </label>
+                                            </td> */}
+                                            <td className="py-3">
+                                              <div className="text-base">
+                                                {option?.servicelevel?.name}
+                                              </div>
+                                              {option.duration_terms && (
+                                                <div className="text-xs text-gray-400 w-40">
+                                                  {option.duration_terms}
+                                                </div>
+                                              )}
+                                            </td>
+                                            <td className="py-3 text-base">
+                                              ${option?.amount}
+                                            </td>
+                                            <td className="py-3 text-base">
+                                              {option.estimated_days} days
+                                            </td>
+                                            <td className="py-3">
+                                              <div className="flex items-center">
+
+                                                <span>{option.provider}</span>
+                                              </div>
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+
+
+
+
+
+
+
+                                </div>
+
                                 <Button
                                   text="Calculate Shipping Rate"
                                   type="success"
                                   onClick={handleUspsPostRequest}
                                   loading={checkRate}
                                 />
+                                {/* 
                                 {uspsShippingRate !== null && (
                                   <p className="mt-3 text-lg font-semibold text-bright-green">
                                     Shipping Charges: ${uspsShippingRate}
                                   </p>
-                                )}
+                                )} */}
                               </div>
                             </div>
                           </div>

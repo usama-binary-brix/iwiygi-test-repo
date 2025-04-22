@@ -66,6 +66,7 @@ const UserListing: FC<ListingProps> = ({
   const [lightboxData, setLightboxData] = useState<LightboxData>({
     imageURL: "",
   });
+
   const [message, setMessage] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);

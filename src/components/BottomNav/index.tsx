@@ -17,15 +17,23 @@ const BottomNav: FC<BottomNavProps> = ({
   onPrivacyPolicyClick,
 }) => {
   return (
-    <footer className="flex flex-col md:flex-row bg-dark-2 px-4 md:px-10 py-4 md:py-10 border-t-2 border-t-black">
-      <div className="flex justify-center md:justify-start mb-4 md:mb-0">
-        <Image
+   <>
+    <footer className="bg-dark-2">
+   <div className="flex flex-col md:flex-row bg-dark-2 px-4 md:px-32 py-4 md:py-6 border-t-2 border-t-black">
+   <div className="flex justify-center md:justify-start mb-4 md:mb-0">
+     <Link
+              href="/"
+              className="flex items-center space-x-3 rtl:space-x-reverse"
+            >
+           <Image
           src="/images/logo.png"
           alt="logo"
           width={200}
           height={200}
           className="object-contain"
         />
+            </Link>
+       
       </div>
       <div className="flex-1" />
       {/* <div className="flex flex-1" /> */}
@@ -96,7 +104,14 @@ const BottomNav: FC<BottomNavProps> = ({
           </button> */}
         </div>
       </div>
+   </div>
     </footer>
+
+    <div className="bg-dark-2 flex items-center justify-center py-2 text-bright-green border-t border-bright-green">
+    Copyright © IWIYGI 2025 All rights reserved.
+    </div>
+   
+   </>
   );
 };
 

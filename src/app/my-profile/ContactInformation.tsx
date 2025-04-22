@@ -18,7 +18,7 @@ interface FormValues {
   password: string;
   re_password: string;
   fullname: string;
-  phonenumber: string;
+  phone: string;
 }
 
 const initialValues: FormValues = {
@@ -27,7 +27,7 @@ const initialValues: FormValues = {
   password: "",
   re_password: "",
   fullname: "",
-  phonenumber: "",
+  phone: "",
 };
 
 const validationSchema = Yup.object({
@@ -47,9 +47,9 @@ const ContactInformation = ({ userDetail }: any) => {
     password: Yup.string(),
     re_password: Yup.string().oneOf([Yup.ref("password")], "Passwords must match"),
     fullname: Yup.string().required("Full name is required"),
-    // phonenumber: Yup.string()
-    //   .matches(/^\d+$/, "Phone number must contain only digits")
-    //   .required("Phone number is required"),
+    phone: Yup.string()
+      .matches(/^\d+$/, "Phone number must contain only digits")
+      .required("Phone number is required"),
   });
 
   const initialValues = {
@@ -58,7 +58,7 @@ const ContactInformation = ({ userDetail }: any) => {
     password: "",
     re_password: "",
     fullname: user?.fullname || "",
-    phonenumber: user?.phonenumber || "1234567890",
+    phone: user?.phone || "1234567890",
   };
 
   const handleUpdateProfile = async (values: any) => {
@@ -82,7 +82,7 @@ const ContactInformation = ({ userDetail }: any) => {
   //   password: "",
   //   re_password: "",
   //   fullname: "",
-  //   phonenumber: "",
+  //   phone: "",
   // });
 
   // interface ErrorResponse {
@@ -172,23 +172,7 @@ const ContactInformation = ({ userDetail }: any) => {
                   className="text-red-500"
                 />
               </div>
-              {/* <div>
-                <label htmlFor="username">PHONE NO:</label>
-                <Field
-                  name="phonenumber"
-                  as={TextInput}
-                  label="PHONE NUMBER"
-                  placeholder='Enter Phone Number'
-
-                  value={values.phonenumber}
-                  onChange={handleChange}
-                />
-                <ErrorMessage
-                  name="phonenumber"
-                  component="div"
-                  className="text-red-500"
-                />
-              </div> */}
+      
               <div>
                 {/* <label htmlFor="username">USERNAME:</label> */}
                 <Field
@@ -225,7 +209,22 @@ const ContactInformation = ({ userDetail }: any) => {
                   className="text-red-500"
                 />
               </div>
+              <div>
+                <Field
+                  name="phone"
+                  as={TextInput}
+                  label="PHONE NUMBER"
+                  placeholder='Enter Phone Number'
 
+                  value={values.phone}
+                  onChange={handleChange}
+                />
+                <ErrorMessage
+                  name="phone"
+                  component="div"
+                  className="text-red-500"
+                />
+              </div>
               <div className="flex justify-end">
                 <Button
                   type="success"

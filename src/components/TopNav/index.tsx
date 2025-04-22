@@ -53,7 +53,6 @@ interface MenuItem {
 }
 
 const TopNav: FC = () => {
-  // const [ads, setAds] = useState<Ad[]>([]);
   const [user, setUser] = useState<any>(null);
   const [role, setRole] = useState();
   const router = useRouter();
@@ -86,83 +85,12 @@ const TopNav: FC = () => {
     }
   }, []);
 
-  // const fetchAds = async () => {
-  //   try {
-  //     const response = await axios.get(
-  //       `${process.env.NEXT_PUBLIC_API}/api/admin/fetchAllAds`,
-  //       {
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //         },
-  //       }
-  //     );
-  //     if (response.status === 200) {
-  //       setAds(response?.data?.data);
-  //     }
-  //   } catch (error) {
-  //     console.error("Error fetching ads:", error);
-  //   }
-  // };
-
-  // const handleLogout = async (e: React.FormEvent) => {
-  //   console.error("Logout failed");
-
-  //   e.preventDefault();
-  //   try {
-  //     let accessToken = localStorage.getItem("accessToken");
-  //     if (!accessToken) {
-  //       console.error("Access token not found");
-  //       return;
-  //     }
-  //     const response = await fetch(
-  //       `${process.env.NEXT_PUBLIC_API}/api/auth/logout`,
-  //       {
-  //         method: "POST",
-  //         mode: "cors",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //           Authorization: `Bearer ${accessToken}`,
-  //         },
-  //       }
-  //     );
-  //     if (response.ok || !response.ok) {
-  //       localStorage.clear();
-  //       window.location.href = "/sign-in";
-  //     }
-  //   } catch (error) {}
-  // };
-
   const handleLogout = async (e: React.FormEvent<Element>) => {
     e.preventDefault(); 
     dispatch(logoutUser()); 
     localStorage.clear();
     router.push("/sign-in"); 
   };
-
-
-  
-  // Inactivity Logout Logic
-
-
-  // useEffect(() => {
-  //   let timeout: NodeJS.Timeout;
-
-  //   const resetTimer = () => {
-  //     clearTimeout(timeout);
-  //     timeout = setTimeout(() => {
-  //       router.push("/sign-in");
-  //       dispatch(logoutUser()); 
-  //       localStorage.clear();
-  //     }, 10000); 
-  //   };
-  //   const handleActivity = () => {
-  //     resetTimer();
-  //   };
-  //   window.addEventListener("mousemove", handleActivity);
-  //   window.addEventListener("keydown", handleActivity);
-  //   resetTimer();
-  // });
-
 
   const adminMenu: MenuItem[] = [
     { name: "Home", link: "/", icon: <IoHomeOutline /> },
@@ -332,20 +260,23 @@ const TopNav: FC = () => {
                   </button>
                 ) : (
                   <Link
-                    href={item.link}
-                    onClick={(e) => {
-                      if (item.dropdown) {
-                        toggleDropdown(index, e);
-                      } else {
-                        handleMenuClick(false);
-                      }
-                    }}
-                    className="block py-2 px-3 text-lg lg:text-lg xl:text-xl text-white rounded hover:bg-black hover:text-[rgb(3,247,25)] flex items-center space-x-1"
-                  >
-                    <span className="text-xl">{item.icon}</span>
-
-                    <span>{item.name}</span>
-                  </Link>
+                  href={item.link}
+                  onClick={(e) => {
+                    if (item.dropdown) {
+                      toggleDropdown(index, e);
+                    } else {
+                      handleMenuClick(false);
+                    }
+                  }}
+                  className={`block py-2 px-3 text-lg lg:text-lg xl:text-xl rounded flex items-center space-x-1 ${
+                    item.name === "Sign Up" 
+                      ? "bg-[#FFFF00] text-black py-2 hover:bg-[#FFFF00]" 
+                      : "text-white hover:bg-black hover:text-[rgb(3,247,25)]"
+                  }`}
+                >
+                  <span className="text-xl">{item.icon}</span>
+                  <span>{item.name}</span>
+                </Link>
                 )}
 
                 {item.dropdown && (

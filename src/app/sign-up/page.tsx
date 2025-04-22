@@ -27,7 +27,7 @@ const SignUp: FC = () => {
   const [requestProcessing, setRequestProcessing] = useState(false);
   const [formData, setFormData] = useState({
     fullname: "",
-    phonenumber: "1234567891",
+    phone: "",
     username: "",
     zipCode: "",
     email: "",
@@ -130,7 +130,7 @@ const SignUp: FC = () => {
       return;
     }
 
-    // const phoneNumber = formData.phonenumber;
+    // const phoneNumber = formData.phone;
     // const phoneRegex = /^[0-9]{10,15}$/;
     // if (!phoneRegex.test(phoneNumber)) {
     //   toast.error("Please enter a valid phone number.");
@@ -228,6 +228,15 @@ const SignUp: FC = () => {
               onChange={handleChange}
               type="email"
               placeholder="Enter Your Email Address"
+            />
+
+<TextInput
+              // label="EMAIL*"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              type="text"
+              placeholder="Enter Your Phone Number"
             />
 
             <div className="relative">

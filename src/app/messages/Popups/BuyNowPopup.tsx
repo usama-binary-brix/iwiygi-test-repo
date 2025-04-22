@@ -76,13 +76,13 @@ const BuyNowPopup: React.FC<PopupProps> = ({
   const [loading, setLoading] = useState(false);
   const [buyNowLoading, setBuyNowLoading] = useState(false);
   const [localStorageUpdate, setLocalStorageUpdate] = useState(false);
-const dispatch = useDispatch()
-  
+  const dispatch = useDispatch()
+
   useEffect(() => {
     const storedAddress = localStorage.getItem("User") || "{}";
     const parsedAddress = JSON.parse(storedAddress);
-// const userData = useSelector((state:any)=>state)
-// console.log(userData, 'user data')
+    // const userData = useSelector((state:any)=>state)
+    // console.log(userData, 'user data')
     setUserName(parsedAddress.username || "");
 
     setBuyerDetailData((prev) => ({
@@ -92,6 +92,8 @@ const dispatch = useDispatch()
       streetAddress: parsedAddress.streetAddress || "",
       city: parsedAddress.city || "",
       zipCode: parsedAddress.zipCode || "",
+      phone: parsedAddress.phone || "",
+
       houseNumber: '0'
     }));
 
@@ -99,11 +101,12 @@ const dispatch = useDispatch()
       parsedAddress.streetAddress &&
       parsedAddress.city &&
       parsedAddress.state &&
+      parsedAddress.phone &&
       parsedAddress.zipCode;
 
     if (hasAddress) {
       setUserAddress(parsedAddress);
-      setShowForm(false); 
+      setShowForm(false);
     }
   }, [localStorageUpdate]);
 
@@ -113,6 +116,8 @@ const dispatch = useDispatch()
     streetAddress: "",
     city: "",
     zipCode: "",
+    phone:"",
+
 
   });
 
@@ -132,7 +137,7 @@ const dispatch = useDispatch()
       toast.error("Please Enter your City.");
       return false;
     }
-   
+
     if (!data.zipCode) {
       toast.error("Please Enter your Zip Code.");
       return false;
@@ -145,7 +150,7 @@ const dispatch = useDispatch()
 
     const payload = {
       ...buyerDetailData,
-    
+
     };
     setLoading(true);
     try {
@@ -167,8 +172,8 @@ const dispatch = useDispatch()
 
       if (response.ok) {
         console.log(responseData, "response data");
-      // dispatch(setUser(responseData.user));
-      localStorage.setItem("User", JSON.stringify(responseData.user));
+        // dispatch(setUser(responseData.user));
+        localStorage.setItem("User", JSON.stringify(responseData.user));
         toast.success("Your shipping information has been added successfully.");
         setLocalStorageUpdate((prev) => !prev);
         setShowForm(false);
@@ -184,16 +189,19 @@ const dispatch = useDispatch()
       toast.error("An error occurred while submitting your information.");
     }
   };
+  const [deliveryTime, setDeliveryTime] = useState('');
 
   const handleBuyNow = async () => {
     const payload = {
-      // ...buyerDetailData,
       listingId,
       messageId,
+      shippingTypeStatus: deliveryTime
     };
+
     setBuyNowLoading(true);
+
     try {
-      let accessToken = localStorage.getItem("accessToken");
+      const accessToken = localStorage.getItem("accessToken");
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API}/api/payments/buyer-buy-now`,
@@ -216,16 +224,56 @@ const dispatch = useDispatch()
         setBuyNowLoading(false);
         handleClosePopup();
       } else {
-        setLoading(false);
-
+        setBuyNowLoading(false);
         toast.error(responseBuyNowData?.message || "Something went wrong.");
       }
     } catch (error) {
       setBuyNowLoading(false);
-
       toast.error("An error occurred while submitting your information.");
     }
   };
+
+
+  // const handleBuyNow = async () => {
+  //   const payload = {
+  //     listingId,
+  //     messageId,
+  //   };
+  //   setBuyNowLoading(true);
+  //   try {
+  //     let accessToken = localStorage.getItem("accessToken");
+
+  //     const response = await fetch(
+  //       `${process.env.NEXT_PUBLIC_API}/api/payments/buyer-buy-now`,
+  //       {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           Authorization: `Bearer ${accessToken}`,
+  //         },
+  //         body: JSON.stringify(payload),
+  //       }
+  //     );
+
+  //     const responseBuyNowData = await response.json();
+
+  //     if (response.ok) {
+  //       toast.success(
+  //         "Congratulations on initiating the request. You will receive an invoice from the seller shortly."
+  //       );
+  //       setBuyNowLoading(false);
+  //       handleClosePopup();
+  //     } else {
+  //       setLoading(false);
+
+  //       toast.error(responseBuyNowData?.message || "Something went wrong.");
+  //     }
+  //   } catch (error) {
+  //     setBuyNowLoading(false);
+
+  //     toast.error("An error occurred while submitting your information.");
+  //   }
+  // };
 
   return (
     <>
@@ -238,9 +286,9 @@ const dispatch = useDispatch()
           <div className="p-5">
             <div
               className="bg-black p-4 rounded-lg relative md:min-w-[30rem]"
-              // style={{
-              //   boxShadow: "1px 1px 10px 2px green",
-              // }}
+            // style={{
+            //   boxShadow: "1px 1px 10px 2px green",
+            // }}
             >
               <button
                 onClick={handleClosePopup}
@@ -281,6 +329,28 @@ const dispatch = useDispatch()
                           />
                         </div>
                       )}
+
+<div className="flex items-center mb-2">
+                        <label
+                          className="mr-4 "
+                          style={{
+                            width: "70%",
+                            fontSize: "16px",
+                            fontWeight: "600",
+                          }}
+                        >
+                     Phone Number
+                        </label>
+                        <input
+                          onChange={handleInputChange}
+                          value={buyerDetailData.phone || ""} // Show an empty string if value is null
+                          name="phone"
+                          type="text"
+                          placeholder="Enter Phone Number" // Sample data
+                          className="border border-gray-300 p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full text-black"
+                        />
+                      </div>
+
 
                       <div className="flex items-center mb-2">
                         <label
@@ -428,7 +498,15 @@ const dispatch = useDispatch()
               ) : (
                 <>
                   <div className="flex flex-col items-center w-full">
-                    <div className="flex justify-between items-start w-full border border-white rounded p-4">
+                  <div className="flex justify-between items-start w-full border border-white rounded p-3 mb-2">
+                      <div>
+                        <span>{userAddress?.phone} </span>
+                     
+                      </div>
+
+                    </div>
+
+                    <div className="flex justify-between items-start w-full border border-white rounded p-3">
                       <div>
                         <span>{userAddress?.streetAddress} </span>
                         <span>{userAddress?.city} </span>
@@ -441,7 +519,21 @@ const dispatch = useDispatch()
                         className="text-bright-green text-[1.5rem] cursor-pointer"
                       />
                     </div>
+                    <select
+                      className="w-full border mt-2 border-white rounded p-3 bg-transparent text-white"
+                      value={deliveryTime}
+                      onChange={(e) => setDeliveryTime(e.target.value)}
+                    >
+                      <option className="text-black" value="PRIORITY_EXPRESS">PRIORITY EXPRESS</option>
+                      <option className="text-black" value="PRIORITY">PRIORITY</option>
+                      <option className="text-black" value="GROUND">GROUND</option>
+                    </select>
+
+
+
                     <br />
+
+
                     <Button
                       loading={buyNowLoading}
                       onClick={handleBuyNow}

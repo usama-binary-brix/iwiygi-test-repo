@@ -151,9 +151,11 @@ const CreateListing: FC = () => {
     <div className="p-4 mb-5">
       <div>
         <div className="container-fluid mx-1">
-          <div className="text-lg sm:text-2xl font-bold  mb-4  flex gap-3 justify-between items-center mt-3">
+         
+   <div className="hidden md:block">
+   <div className="text-lg sm:text-2xl font-bold  mb-4  flex gap-3 justify-between items-center mt-3">
             <BackStep href="/" />
-            <span>Create Listing</span>
+            <span className="text-center">Create Your Listing... <br/> For the Item You Want to Buy</span>
             <div className="flex items-center gap-2">
               <ListingButtons
                 icon={<IoListOutline />}
@@ -167,6 +169,32 @@ const CreateListing: FC = () => {
               <ListingButtons icon={<IoAdd />} url={"/create-listing"} />
             </div>
           </div>
+   </div>
+<div className="md:hidden">
+  
+<span className="text-lg sm:text-2xl font-bold text-center flex items-center justify-center">Create Your Listing... <br/> For the Item You Want to Buy</span>
+          <div className="text-lg sm:text-2xl font-bold  mb-4  flex gap-3 justify-between items-center mt-3">
+            <BackStep href="/" />
+
+            <div className="flex items-center gap-2">
+              <ListingButtons
+                icon={<IoListOutline />}
+                url={"/listings/search"}
+              />
+              <ListingButtons icon={<CgUserList />} url={"/user-listing"} />
+              <ListingButtons
+                icon={<IoHeartOutline />}
+                url={"/saved-listings"}
+              />
+              <ListingButtons icon={<IoAdd />} url={"/create-listing"} />
+            </div>
+          </div>
+
+</div>
+
+
+
+
           <form
             className="flex justify-center flex-col items-center"
           >

@@ -6,6 +6,7 @@ import Lightbox from "react-image-lightbox";
 import UserProfile from "./UserProfile";
 import Button from "../button/Button";
 import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
 
 interface LightboxData {
   imageURL: string;
@@ -47,6 +48,7 @@ const MegaListView = ({
     imageURL: "",
   });
   const router = useRouter();
+const UserRole = useSelector((state:any)=>state?.user?.user?.role)
 
   const openLightbox = (attachmentFile: string | undefined) => {
     if (attachmentFile) {
@@ -58,6 +60,8 @@ const MegaListView = ({
   const handleViewList = () => {
     router.push(`/listings/${slug}`);
   };
+
+  console.log(listingPostedBy?.role, 'role')
 
   return (
     <div className="bg-[#212121] mx-auto border-bright-green border rounded-sm text-gray-700 mb-0.5 h-30 w-full md:w-[75%] lg:w-full">
@@ -138,7 +142,7 @@ const MegaListView = ({
         )}
         <div className="lg:border-r px-3">
           <div>
-            {!listingPostedBy || listingPostedBy?.role === "user" ? (
+            {!UserRole || UserRole === "user" ? (
               <Share slug={slug}/>
             ) : (
               // <Share />

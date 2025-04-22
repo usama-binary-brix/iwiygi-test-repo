@@ -213,7 +213,7 @@ const dispatch = useDispatch()
                   <button
                     onClick={() => handleSearch(item.id)}
                     key={item.id}
-                    className="border-2 border-bright-green bg-black w-full  md:w-[229px] p-3 flex items-center justify-center text-center font-bold"
+                    className="border-2 min-h-20 border-bright-green bg-black w-full  md:w-[229px] p-3 flex items-center justify-center text-center font-bold"
                   >
                     {item.name}
                   </button>

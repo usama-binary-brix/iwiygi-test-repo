@@ -266,6 +266,19 @@ function GotItItem({ params }: { params: { id: any } }) {
     setCreateInvoiceData((prev) => ({ ...prev, [name]: value }));
   };
 
+  function convertToKg(value:any, unit:any) {
+    const weight = Number(value) || 0;
+    
+    switch (unit) {
+      case "lbs":
+        return weight * 0.453592;  // 1 pound = 0.453592 kg
+      case "oz":
+        return weight * 0.0283495; // 1 ounce = 0.0283495 kg
+      default:
+        return weight; // If no unit or invalid unit, assume it's already in kg
+    }
+  }
+
   // Function to calculate USPS shipping cost from API
   const handleUspsPostRequest = async () => {
     setCheckRate(true);
@@ -276,27 +289,32 @@ function GotItItem({ params }: { params: { id: any } }) {
 
 
       // const messageId = messages[0]?.id || 0;
+  
+    //   let weightInKg = parseFloat(uspsData.weight) || 0;
 
-      let weightInKg = parseFloat(uspsData.weight) || 0;
+    // switch (uspsData.weightUnit) {
+    //   case "g":
+    //     weightInKg = weightInKg / 1000; // Convert grams to kg
+    //     break;
+    //   case "lbs":
+    //     weightInKg = weightInKg * 0.453592; // Convert lbs to kg
+    //     break;
+    //   case "oz":
+    //     weightInKg = weightInKg * 0.0283495; // Convert oz to kg
+    //     break;
+    // }
 
-    switch (uspsData.weightUnit) {
-      case "g":
-        weightInKg = weightInKg / 1000; // Convert grams to kg
-        break;
-      case "lbs":
-        weightInKg = weightInKg * 0.453592; // Convert lbs to kg
-        break;
-      case "oz":
-        weightInKg = weightInKg * 0.0283495; // Convert oz to kg
-        break;
-    }
+    // if (weightInKg > 70) {
+    //   toast.error("You cannot ship more than 70 kg.");
+    //   setCheckRate(false);
+    //   return;
+    // }
 
-    if (weightInKg > 70) {
-      toast.error("You cannot ship more than 70 kg.");
-      setCheckRate(false);
-      return;
-    }
-
+    const weightInKg = convertToKg(uspsData.weight, uspsData.weightUnit);
+if (weightInKg > 70) {
+  setCheckRate(false);
+  return toast.error(`You cannot ship more than ${uspsData.weight}.`);
+}
     const sanitizedData = {
       ...uspsData,
       weight: weightInKg, // Send weight in kg
@@ -366,13 +384,16 @@ function GotItItem({ params }: { params: { id: any } }) {
           <div className="text-2xl sm:text-3xl font-bold  mb-4  flex gap-3 justify-between items-center mt-3">
             <BackStep href="/listings/search" />
             <span>Create Offer Message</span>
-
-            <button
+<div>
+  
+</div>
+            {/* <button
               className="text-black bg-bright-green p-3 text-sm rounded-lg"
               onClick={handleShowShippingModal}
             >
               Calculate Shipping
-            </button>
+            </button> */}
+
             {/* <Link
               href="/my-profile"
               className="bg-bright-green flex items-center justify-center gap-2 px-3 text-black text-base  font-bold py-2 w-[fit-content] rounded-md text-center"
@@ -826,10 +847,8 @@ function GotItItem({ params }: { params: { id: any } }) {
                                     value={uspsData.weightUnit}
                                     className="border border-gray-300 p-2 ml-1 focus:outline-none focus:ring-2 w-1/4 text-black"
                                   >
-                                    <option value="kg">kg</option>
-                                    <option value="g">g</option>
-                                    <option value="lbs">lbs</option>
-                                    <option value="oz">oz</option>
+                                  <option value="lbs">lbs</option>
+                                  <option value="oz">oz</option>
                                   </select>
                                 </div>
                               </div>

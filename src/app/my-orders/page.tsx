@@ -12,17 +12,17 @@ import { IoClose } from "react-icons/io5";
 import MiniListView from "@/components/generic/MiniListView";
 import Button from "@/components/button/Button";
 import OrderPopups from "./OrderPopups";
-import { MdAdd, MdDone } from "react-icons/md";
+import { MdAdd, MdDone, MdFileDownload } from "react-icons/md";
 import { FaEdit } from "react-icons/fa";
 
 const Page = () => {
   const [showOrderReceivedPopup, setShowOrderReceivedPopup] =
     useState<boolean>(false);
-    const [showOrderCancelPopup, setShowOrderCancelPopup] =
+  const [showOrderCancelPopup, setShowOrderCancelPopup] =
     useState<boolean>(false);
   const [trackingNumberLoading, setTrackingNumberLoading] =
     useState<boolean>(false);
-    
+
 
   const [refundLoading, setRefundLoading] = useState<boolean>(false);
   const [orderRecievedLoading, setOrderRecievedLoading] =
@@ -171,6 +171,50 @@ const Page = () => {
     // window.open(invoicUrl, "_blank");
     window.location.href = invoiceReceipt;
   };
+
+  const handleViewLabelUrl = async (id: any) => {
+  
+
+
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API}/api/label/generate-labels/${id}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      const responseBuyNowData = await response.json();
+      if (response.ok) {
+        toast.success(
+          "Invoice Labels are Generated."
+        );
+        // setBuyNowLoading(false);
+        // handleClosePopup();
+      } else {
+        // setBuyNowLoading(false);
+        // toast.error(responseBuyNowData?.message || "Something went wrong.");
+      }
+    } catch (error) {
+      // setBuyNowLoading(false);
+      toast.error("An error occurred while submitting your information.");
+    }
+
+
+
+
+
+  };
+
+
+
+  
 
   const submitTrackingNumber = async () => {
     if (trackingNumber === "") {
@@ -418,17 +462,15 @@ const Page = () => {
         <div className="flex flex-col md:flex-row mb-4">
           <button
             onClick={() => setActiveTab("itemsPurchased")}
-            className={`px-8 md:min-w-[10rem] py-2 cursor-pointer bg-white text-black border-2 border-transparent font-bold  ${
-              activeTab === "itemsPurchased" ? "active" : ""
-            }`}
+            className={`px-8 md:min-w-[10rem] py-2 cursor-pointer bg-white text-black border-2 border-transparent font-bold  ${activeTab === "itemsPurchased" ? "active" : ""
+              }`}
           >
             Items Purchased
           </button>
           <button
             onClick={() => setActiveTab("itemsSold")}
-            className={`px-8 py-2 md:min-w-[12rem] cursor-pointer bg-white text-black border-2 border-transparent font-bold  ${
-              activeTab === "itemsSold" ? "active" : ""
-            }`}
+            className={`px-8 py-2 md:min-w-[12rem] cursor-pointer bg-white text-black border-2 border-transparent font-bold  ${activeTab === "itemsSold" ? "active" : ""
+              }`}
           >
             Items Sold
           </button>
@@ -503,31 +545,31 @@ const Page = () => {
                               mainClassName="border-none"
                             />
                           </td>
-                        {value.orderStatus == 'COMPLETED' ? (
-                          <>
-                          <td className="p-3 text-sm capitalize justify-center">
-                            <div className=" flex items-center justify-center">
-                              <div className="border-2 border-bright-green p-2 w-[fit-content] text-bright-green font-bold flex items-center">I Got It! <MdDone className="text-bright-green inline text-lg"/> </div>
-                            </div>
-                          </td>
-                          </>
-                        ):(
-                          <>
-                   <td className="p-3 text-sm capitalize justify-center">
-  <div className="flex items-center justify-center">
-    <div
-      className="border border-bright-green p-4 w-[fit-content] cursor-pointer"
-      onClick={() => {
-        setShowOrderReceivedPopup(true);
-        handleReceivedOrder(value.orderId);
-      }}
-    ></div>
-  </div>
-</td>
+                          {value.orderStatus == 'COMPLETED' ? (
+                            <>
+                              <td className="p-3 text-sm capitalize justify-center">
+                                <div className=" flex items-center justify-center">
+                                  <div className="border-2 border-bright-green p-2 w-[fit-content] text-bright-green font-bold flex items-center">I Got It! <MdDone className="text-bright-green inline text-lg" /> </div>
+                                </div>
+                              </td>
+                            </>
+                          ) : (
+                            <>
+                              <td className="p-3 text-sm capitalize justify-center">
+                                <div className="flex items-center justify-center">
+                                  <div
+                                    className="border border-bright-green p-4 w-[fit-content] cursor-pointer"
+                                    onClick={() => {
+                                      setShowOrderReceivedPopup(true);
+                                      handleReceivedOrder(value.orderId);
+                                    }}
+                                  ></div>
+                                </div>
+                              </td>
 
-                          </>
-                        )}
-                          
+                            </>
+                          )}
+
                           <td className="p-3 text-sm capitalize">
                             {value.orderStatus.toLowerCase() || "N/A"}
                           </td>
@@ -590,21 +632,21 @@ const Page = () => {
                                 <option
                                   className="bg-[#212121] text-[#959595] hover:bg-gray-500 border-none"
                                   value="cancel"
-                                  // disabled={
-                                  //   !value.trackingNumber ||
-                                  //   value.orderStatus == "SHIPPING"
-                                  // }
-                                  // disabled={!(value.orderStatus === "COMPLETED" && value.trackingNumber)}
+                                // disabled={
+                                //   !value.trackingNumber ||
+                                //   value.orderStatus == "SHIPPING"
+                                // }
+                                // disabled={!(value.orderStatus === "COMPLETED" && value.trackingNumber)}
                                 >
-                                 Cancel Order
+                                  Cancel Order
                                 </option>
 
-                             
+
                               </select>
                             </div>
                           </td>
 
-                      
+
                         </tr>
                       );
                     })
@@ -633,6 +675,10 @@ const Page = () => {
                       Shipping Address
                     </th>
                     <th className="text-start text-[16px] p-2">Total Price</th>
+                    <th className="text-start text-[16px] p-2">Invoice</th>
+                    <th className="text-start text-[16px] p-2">Download Labels</th>
+
+
                     <th className="text-start text-[16px] p-2">Tracking no.</th>
                   </tr>
                 </thead>
@@ -695,6 +741,48 @@ const Page = () => {
                               {/* {value?.totalPrice || "N/A"} */}$
                               {totalAmount?.toFixed(2) || "0.00"}
                             </td>
+                            <td className="p-3 text-sm">
+                              <p className="flex gap-3 items-center ">
+                                {/* {value?.invoiceUrl || "N/A"}{" "} */}
+                                {value.invoiceReceipt && (
+                                  <MdFileDownload
+                                    className="text-bright-green text-[1.2rem] cursor-pointer"
+                                    onClick={() =>
+                                      handleViewInvoiceUrl(value.invoiceReceipt)
+                                    }
+                                  />
+                                )}
+
+                              </p>
+                            </td>
+
+                            <td className="p-3 text-sm">
+
+
+
+                            
+                              <p className="flex gap-3 items-center ">
+                                {/* {value?.labels?.invoiceReceipt && (
+                                  <MdFileDownload
+                                    className="text-bright-green text-[1.2rem] cursor-pointer"
+                                    onClick={() =>
+                                      handleViewLabelUrl(value.invoiceReceipt)
+                                    }
+                                  />
+                                )} */}
+
+
+
+<MdFileDownload
+                                    className="text-bright-green text-[1.2rem] cursor-pointer"
+                                    onClick={() =>
+                                      handleViewLabelUrl(value.orderId)
+                                    }
+                                  />
+
+                              </p>
+                            </td>
+
 
                             <td className="p-3 text-sm">
                               <p className="flex gap-3 items-center ">
@@ -1116,13 +1204,13 @@ const Page = () => {
             </div>
           </div>
         )}
-         {showOrderCancelPopup && (
+        {showOrderCancelPopup && (
           <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
             <div className="p-5">
               <div className="bg-black p-4 rounded-lg relative max-w-[30rem]">
                 <div className="flex items-start justify-between">
                   <h2 className="text-3xl font-semibold mb-4 text-white">
-                   Want to Cancel Order?
+                    Want to Cancel Order?
                   </h2>
                   <button
                     className=" h-[35px] w-[35px] rounded-full text-white-600 font-bold"
@@ -1132,7 +1220,7 @@ const Page = () => {
                   </button>
                 </div>
                 <p className="text-[0.9rem]">
-                Please confirm that you do not want this. By clicking Submit, the order will be canceled.
+                  Please confirm that you do not want this. By clicking Submit, the order will be canceled.
                 </p>
 
                 {/* <TextInput
@@ -1150,7 +1238,7 @@ const Page = () => {
                   rows={5}
                   className="w-full h-auto placeholder:text-gray text-black mt-[20px] hidden"
                   value={'I Want to cancel my order'}
-                  // onChange={(e: any) => setRefundReason(e.target.value)}
+                // onChange={(e: any) => setRefundReason(e.target.value)}
                 />
 
                 <center className="mt-3 flex gap-3 items-center justify-center">
